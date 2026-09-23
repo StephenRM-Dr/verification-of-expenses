@@ -1,0 +1,27 @@
+# Binarios y Ejecutables
+*.exe
+main
+warecover
+dbmigrate
+
+# WhatsApp y Persistencia
+*.db
+*.db-shm
+*.db-wal
+cargas-brailer/
+uploads/
+
+# Reportes generados
+*.xlsx
+
+# Node.js (si se agrega frontend en el futuro)
+node_modules/
+.env
+.env.*
+!.env.example
+
+# Otros
+.DS_Store
+dist/
+bin/
+.agents/

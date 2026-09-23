@@ -1,0 +1,15 @@
+*.exe
+*.db
+*.db-shm
+*.db-wal
+cargas-brailer/
+uploads/
+node_modules/
+.next/
+.git/
+.agents/
+brailer/
+brailer-web/
+reporte_pagos.xlsx
+brailer_ledger.db
+whatsapp_final_v*.db

@@ -1,0 +1,427 @@
+basePath: /
+definitions:
+  models.Transaccion:
+    properties:
+      banco_usado:
+        type: string
+      ciudad:
+        type: string
+      descripcion:
+        type: string
+      fecha_pago:
+        type: string
+      id:
+        type: integer
+      imagen_path:
+        type: string
+      monto:
+        type: number
+      referencia:
+        type: string
+    type: object
+host: api.example.com
+info:
+  contact: {}
+  description: Backend escalable en Go para control financiero y automatización de
+    reportes a WhatsApp.
+  title: Braille Web - API de Transacciones y Reportes
+  version: "1.0"
+paths:
+  /api/export:
+    get:
+      description: Sincroniza y descarga una sábana de datos procesada en formato
+        binario legible por Microsoft Excel o plataformas externas de contabilidad.
+      produces:
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      responses:
+        "200":
+          description: Descarga de archivo reporte_brailer.xlsx
+          schema:
+            type: file
+        "500":
+          description: Error al construir dinámicamente la estructura Excel
+          schema:
+            type: string
+      summary: Exportar historial de transacciones a Excel (.xlsx)
+      tags:
+      - export
+  /api/summary:
+    get:
+      description: Calcula el balance acumulado general, los gastos del mes corriente
+        en base a la fecha actual y la cantidad de transacciones registradas.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Ejemplo: {''total_general'': 5000.5, ''total_mes'': 1200.0,
+            ''conteo'': 14}'
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error de servidor al calcular la lista
+          schema:
+            type: string
+      summary: Obtener resumen analítico
+      tags:
+      - metrics
+  /api/transactions:
+    delete:
+      consumes:
+      - application/json
+      - multipart/form-data
+      description: Permite Listar (GET), Crear (POST), Editar (PUT) usando multipart/form-data
+        o JSON, y Eliminar (DELETE) transacciones financieras.
+      parameters:
+      - description: ID de la transacción (Requerido solo para DELETE)
+        in: query
+        name: id
+        type: integer
+      - description: ID de la transacción (Requerido solo para PUT con FormData)
+        in: formData
+        name: id
+        type: integer
+      - description: Fecha de pago (DD/MM/YYYY)
+        in: formData
+        name: fecha_pago
+        type: string
+      - description: Descripción o concepto del gasto
+        in: formData
+        name: descripcion
+        type: string
+      - description: Monto financiero de la operación
+        in: formData
+        name: monto
+        type: number
+      - description: Ciudad de la transacción
+        in: formData
+        name: ciudad
+        type: string
+      - description: Banco utilizado
+        in: formData
+        name: banco_usado
+        type: string
+      - description: Número de referencia bancaria
+        in: formData
+        name: referencia
+        type: string
+      - description: Ruta de imagen existente si no se reemplaza
+        in: formData
+        name: imagen_path
+        type: string
+      - description: Archivo comprobante / soporte físico
+        in: formData
+        name: image
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operación exitosa (GET devuelve lista, PUT confirma estado)
+          schema:
+            items:
+              $ref: '#/definitions/models.Transaccion'
+            type: array
+        "201":
+          description: Transacción creada exitosamente (POST)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Datos de entrada inválidos
+          schema:
+            type: string
+        "500":
+          description: Error interno del servidor de base de datos
+          schema:
+            type: string
+      summary: Manejar Transacciones (CRUD)
+      tags:
+      - transactions
+    get:
+      consumes:
+      - application/json
+      - multipart/form-data
+      description: Permite Listar (GET), Crear (POST), Editar (PUT) usando multipart/form-data
+        o JSON, y Eliminar (DELETE) transacciones financieras.
+      parameters:
+      - description: ID de la transacción (Requerido solo para DELETE)
+        in: query
+        name: id
+        type: integer
+      - description: ID de la transacción (Requerido solo para PUT con FormData)
+        in: formData
+        name: id
+        type: integer
+      - description: Fecha de pago (DD/MM/YYYY)
+        in: formData
+        name: fecha_pago
+        type: string
+      - description: Descripción o concepto del gasto
+        in: formData
+        name: descripcion
+        type: string
+      - description: Monto financiero de la operación
+        in: formData
+        name: monto
+        type: number
+      - description: Ciudad de la transacción
+        in: formData
+        name: ciudad
+        type: string
+      - description: Banco utilizado
+        in: formData
+        name: banco_usado
+        type: string
+      - description: Número de referencia bancaria
+        in: formData
+        name: referencia
+        type: string
+      - description: Ruta de imagen existente si no se reemplaza
+        in: formData
+        name: imagen_path
+        type: string
+      - description: Archivo comprobante / soporte físico
+        in: formData
+        name: image
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operación exitosa (GET devuelve lista, PUT confirma estado)
+          schema:
+            items:
+              $ref: '#/definitions/models.Transaccion'
+            type: array
+        "201":
+          description: Transacción creada exitosamente (POST)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Datos de entrada inválidos
+          schema:
+            type: string
+        "500":
+          description: Error interno del servidor de base de datos
+          schema:
+            type: string
+      summary: Manejar Transacciones (CRUD)
+      tags:
+      - transactions
+    post:
+      consumes:
+      - application/json
+      - multipart/form-data
+      description: Permite Listar (GET), Crear (POST), Editar (PUT) usando multipart/form-data
+        o JSON, y Eliminar (DELETE) transacciones financieras.
+      parameters:
+      - description: ID de la transacción (Requerido solo para DELETE)
+        in: query
+        name: id
+        type: integer
+      - description: ID de la transacción (Requerido solo para PUT con FormData)
+        in: formData
+        name: id
+        type: integer
+      - description: Fecha de pago (DD/MM/YYYY)
+        in: formData
+        name: fecha_pago
+        type: string
+      - description: Descripción o concepto del gasto
+        in: formData
+        name: descripcion
+        type: string
+      - description: Monto financiero de la operación
+        in: formData
+        name: monto
+        type: number
+      - description: Ciudad de la transacción
+        in: formData
+        name: ciudad
+        type: string
+      - description: Banco utilizado
+        in: formData
+        name: banco_usado
+        type: string
+      - description: Número de referencia bancaria
+        in: formData
+        name: referencia
+        type: string
+      - description: Ruta de imagen existente si no se reemplaza
+        in: formData
+        name: imagen_path
+        type: string
+      - description: Archivo comprobante / soporte físico
+        in: formData
+        name: image
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operación exitosa (GET devuelve lista, PUT confirma estado)
+          schema:
+            items:
+              $ref: '#/definitions/models.Transaccion'
+            type: array
+        "201":
+          description: Transacción creada exitosamente (POST)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Datos de entrada inválidos
+          schema:
+            type: string
+        "500":
+          description: Error interno del servidor de base de datos
+          schema:
+            type: string
+      summary: Manejar Transacciones (CRUD)
+      tags:
+      - transactions
+    put:
+      consumes:
+      - application/json
+      - multipart/form-data
+      description: Permite Listar (GET), Crear (POST), Editar (PUT) usando multipart/form-data
+        o JSON, y Eliminar (DELETE) transacciones financieras.
+      parameters:
+      - description: ID de la transacción (Requerido solo para DELETE)
+        in: query
+        name: id
+        type: integer
+      - description: ID de la transacción (Requerido solo para PUT con FormData)
+        in: formData
+        name: id
+        type: integer
+      - description: Fecha de pago (DD/MM/YYYY)
+        in: formData
+        name: fecha_pago
+        type: string
+      - description: Descripción o concepto del gasto
+        in: formData
+        name: descripcion
+        type: string
+      - description: Monto financiero de la operación
+        in: formData
+        name: monto
+        type: number
+      - description: Ciudad de la transacción
+        in: formData
+        name: ciudad
+        type: string
+      - description: Banco utilizado
+        in: formData
+        name: banco_usado
+        type: string
+      - description: Número de referencia bancaria
+        in: formData
+        name: referencia
+        type: string
+      - description: Ruta de imagen existente si no se reemplaza
+        in: formData
+        name: imagen_path
+        type: string
+      - description: Archivo comprobante / soporte físico
+        in: formData
+        name: image
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operación exitosa (GET devuelve lista, PUT confirma estado)
+          schema:
+            items:
+              $ref: '#/definitions/models.Transaccion'
+            type: array
+        "201":
+          description: Transacción creada exitosamente (POST)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Datos de entrada inválidos
+          schema:
+            type: string
+        "500":
+          description: Error interno del servidor de base de datos
+          schema:
+            type: string
+      summary: Manejar Transacciones (CRUD)
+      tags:
+      - transactions
+  /api/whatsapp/logout:
+    post:
+      description: Desvincula de manera remota el dispositivo y levanta de forma asíncrona
+        una nueva rutina para refrescar las llaves criptográficas y servir un QR limpio.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Confirmación de reinicio de credenciales: {''status'': ''resetting''}'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Cerrar sesión de WhatsApp y regenerar QR
+      tags:
+      - whatsapp
+  /api/whatsapp/send:
+    post:
+      description: Encola de forma asíncrona y segura el envío estructurado de un
+        reporte hacia un canal o grupo de WhatsApp parametrizado. Evita duplicados
+        simultáneos.
+      parameters:
+      - description: ID único de la transacción a reportar
+        in: query
+        name: id
+        required: true
+        type: integer
+      - description: 'Nombre o JID del destinatario (Por defecto: ''Prueba'')'
+        in: query
+        name: to
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Estado de la transacción en cola: ''queued'' o ''processing'''
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Transacción o Grupo objetivo no encontrado
+          schema:
+            type: string
+        "503":
+          description: El cliente de WhatsApp no se encuentra inicializado o conectado
+          schema:
+            type: string
+      summary: Reportar transacción a WhatsApp
+      tags:
+      - whatsapp
+  /api/whatsapp/status:
+    get:
+      description: Devuelve el estado actual del puente de comunicación, errores persistentes,
+        cadenas QR activas para emparejamiento o el listado de grupos vinculados.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Estructura del estado del cliente y grupos vinculados
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Estado de WhatsApp Multi-Device
+      tags:
+      - whatsapp
+swagger: "2.0"
