@@ -1,57 +1,72 @@
-# Brailer Ledger Backend (Golang)
+# Verification of Expenses (Go backend)
 
-Este es el backend principal del sistema **Brailer Ledger**, una aplicación financiera minimalista que permite gestionar transacciones, generar reportes en Excel y enviar notificaciones directamente a grupos de WhatsApp.
+Backend for a minimalist financial ledger: record transactions with receipt images, export reports to Excel, and send notifications to WhatsApp groups. It exposes a REST API and, when run in a terminal, an interactive CLI menu.
 
-## Tecnologías Utilizadas
-- **Lenguaje:** Go 1.25.0
-- **Base de Datos:** PostgreSQL (usando `github.com/jackc/pgx/v5`)
-- **Integración WhatsApp:** `go.mau.fi/whatsmeow` (basado en Signal Protocol)
-- **Exportación a Excel:** `github.com/xuri/excelize/v2`
+> All configuration in this repository is placeholder-only. Provide your own credentials through environment variables (see `.env.example`).
 
-## Requisitos Previos
-1. Instalar [Go 1.25+](https://go.dev/dl/).
-2. Acceso a una base de datos PostgreSQL (local o en la nube como Neon DB).
-3. (Opcional) WhatsApp vinculado para envío de reportes.
+## Tech Stack
+- **Language:** Go 1.25
+- **Database:** PostgreSQL (`github.com/jackc/pgx/v5`)
+- **WhatsApp integration:** `go.mau.fi/whatsmeow`
+- **Excel export:** `github.com/xuri/excelize/v2`
+- **Receipt storage:** S3-compatible object storage (Cloudflare R2, AWS S3, Backblaze B2, Neon Object Storage) with local-disk fallback
 
-## Configuración y Ejecución Local
+## Prerequisites
+1. [Go 1.25+](https://go.dev/dl/)
+2. A PostgreSQL database (local or hosted, e.g. Neon)
+3. (Optional) A WhatsApp account to link for sending reports
 
-1. **Clonar y descargar dependencias:**
+## Getting Started
+
+1. **Install dependencies**
    ```bash
    go mod download
    ```
 
-2. **Variables de Entorno (Opcional pero recomendado):**
-   Puedes configurar las variables directamente en tu terminal o sistema antes de ejecutar:
-   - `DATABASE_URL`: Cadena de conexión a PostgreSQL. Si está vacía, usará la conexión por defecto hacia Neon DB.
-   - `PORT`: Puerto para el servidor de la API (por defecto: `8080`).
+2. **Configure the environment**
+   ```bash
+   cp .env.example .env
+   ```
+   Then edit `.env`:
+   - `DATABASE_URL` (**required**): PostgreSQL connection string. The app exits at startup if it is missing. For hosted databases such as Neon, append `sslmode=require`.
+   - `PORT`: API server port (default `8080`).
+   - `AWS_*` / `S3_*` (optional): S3-compatible storage credentials for receipts. If unset, files are stored in `./cargas-brailer`. That directory is ephemeral on most cloud platforms, so configure S3 storage for production.
 
-3. **Ejecutar la aplicación:**
+3. **Run**
    ```bash
    go run main.go
    ```
-   *Nota: La aplicación iniciará un menú interactivo en la terminal si se detecta un entorno TTY, y a su vez levantará un servidor API en segundo plano en el puerto 8080.*
+   In a terminal (TTY) the app shows an interactive menu and runs the API server in the background. In non-interactive environments (Docker, cloud) it runs the API server only.
 
-4. **Compilar para producción:**
+4. **Build for production**
    ```bash
    go build -v -o main .
    ./main
    ```
 
-## Integración con WhatsApp
-Al iniciar, la aplicación intentará conectarse a WhatsApp de forma asíncrona. Si es la primera vez que se ejecuta (y no existe la base de datos de sesión), se imprimirá un código QR en la consola de la API o se podrá obtener mediante el endpoint `/api/whatsapp/status` para vincular tu dispositivo desde la app de WhatsApp.
+## WhatsApp Integration
+On startup the app connects to WhatsApp asynchronously. On the first run, when no session exists, a QR code is printed to the console (it can also be fetched from the `/api/whatsapp/status` endpoint) so you can link your device from the WhatsApp app.
 
-## Solución de Problemas Frecuentes
+## API Documentation
+Swagger docs are in the `docs/` directory (`swagger.json` / `swagger.yaml`). The `host` field is a placeholder (`api.example.com`); change the `@host` annotation in `main.go` and regenerate with `swag init` for your deployment.
 
-1. **Error: "Failed to connect to database"**
-   - Verifica que la variable `DATABASE_URL` sea correcta. Si usas Neon DB, asegúrate de añadir `sslmode=require`.
-   - Verifica tu conexión a internet o firewall si estás apuntando a una DB externa.
+## Deployment
+- Docker: see `Dockerfile`
+- Railway: see [README_RAILWAY.md](README_RAILWAY.md)
+- Koyeb: see [README_KOYEB_VERCEL.md](README_KOYEB_VERCEL.md)
 
-2. **El envío de WhatsApp falla o marca "not connected"**
-   - Asegúrate de haber escaneado el código QR correctamente.
-   - Si la sesión parece corrupta, elimina los archivos `.db` generados por whatsmeow (`whatsapp_final_vX.db`) en la raíz del proyecto y reinicia la app para escanear de nuevo.
+## Troubleshooting
 
-3. **CORS o errores de API desde el Frontend**
-   - Asegúrate de que el backend está corriendo en la IP correcta. En `main.go`, el middleware de CORS está configurado para aceptar todas las peticiones (`*`), pero verifica que no haya un firewall bloqueando el puerto `8080`.
+1. **"Falta DATABASE_URL" / "Failed to connect to database"**
+   - Make sure `DATABASE_URL` is set in the environment or in `.env`, and that it is valid.
+   - Check your network or firewall if the database is remote.
 
-4. **El servidor se detiene en Cloud (Railway/Koyeb)**
-   - El archivo `main.go` incluye un bucle para evitar cierres prematuros en modo no interactivo. Asegúrate de configurar correctamente el `PORT` en los variables de tu plataforma en la nube.
+2. **WhatsApp fails to send or reports "not connected"**
+   - Confirm you scanned the QR code.
+   - If the session looks corrupt, delete the whatsmeow session `.db` files in the project root and restart to link again.
+
+3. **CORS or API errors from a frontend**
+   - The CORS middleware accepts all origins (`*`). Check that no firewall is blocking the API port.
+
+4. **Server stops on a cloud platform (Railway/Koyeb)**
+   - In non-interactive mode `main.go` blocks to keep the process alive. Make sure `PORT` is set correctly in your platform's environment variables.
