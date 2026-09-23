@@ -51,9 +51,7 @@ On startup the app connects to WhatsApp asynchronously. On the first run, when n
 Swagger docs are in the `docs/` directory (`swagger.json` / `swagger.yaml`). The `host` field is a placeholder (`api.example.com`); change the `@host` annotation in `main.go` and regenerate with `swag init` for your deployment.
 
 ## Deployment
-- Docker: see `Dockerfile`
-- Railway: see [README_RAILWAY.md](README_RAILWAY.md)
-- Koyeb: see [README_KOYEB_VERCEL.md](README_KOYEB_VERCEL.md)
+A `Dockerfile` and a `railway.json` are included. Set `DATABASE_URL` (and optionally the S3 variables) in your platform's environment; the app listens on `PORT` (default `8080`).
 
 ## Troubleshooting
 
