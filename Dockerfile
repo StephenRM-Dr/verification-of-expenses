@@ -23,7 +23,7 @@ ENV CGO_ENABLED=0
 RUN go build -v -o main .
 
 # Crear directorio para subidas y datos temporales
-RUN mkdir -p cargas-brailer
+RUN mkdir -p uploads
 
 # Koyeb usa el puerto 8080 en tu configuración actual
 EXPOSE 8080

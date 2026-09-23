@@ -9,13 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"example.com/m/v2/internal/api"
-	"example.com/m/v2/internal/db"
-	"example.com/m/v2/internal/export"
-	"example.com/m/v2/internal/models"
-	"example.com/m/v2/internal/storage"
-	"example.com/m/v2/internal/utils"
-	"example.com/m/v2/internal/whatsapp"
+	"github.com/stephenrm-dr/verification-of-expenses/internal/api"
+	"github.com/stephenrm-dr/verification-of-expenses/internal/db"
+	"github.com/stephenrm-dr/verification-of-expenses/internal/export"
+	"github.com/stephenrm-dr/verification-of-expenses/internal/models"
+	"github.com/stephenrm-dr/verification-of-expenses/internal/storage"
+	"github.com/stephenrm-dr/verification-of-expenses/internal/utils"
+	"github.com/stephenrm-dr/verification-of-expenses/internal/whatsapp"
 	"github.com/joho/godotenv"
 )
 

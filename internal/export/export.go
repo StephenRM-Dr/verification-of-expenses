@@ -3,7 +3,7 @@ package export
 import (
 	"strconv"
 
-	"example.com/m/v2/internal/models"
+	"github.com/stephenrm-dr/verification-of-expenses/internal/models"
 	"github.com/xuri/excelize/v2"
 )
 

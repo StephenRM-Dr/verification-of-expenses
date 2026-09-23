@@ -18,7 +18,7 @@ import (
 	"log"
 	"os"
 
-	"example.com/m/v2/internal/db"
+	"github.com/stephenrm-dr/verification-of-expenses/internal/db"
 	_ "github.com/lib/pq"
 )
 

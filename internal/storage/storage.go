@@ -21,7 +21,7 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
-const localDir = "cargas-brailer"
+const localDir = "uploads"
 
 var (
 	client *minio.Client

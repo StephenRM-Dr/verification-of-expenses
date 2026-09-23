@@ -2,7 +2,7 @@ package db
 
 import (
 	"database/sql"
-	"example.com/m/v2/internal/models"
+	"github.com/stephenrm-dr/verification-of-expenses/internal/models"
 	_ "github.com/lib/pq"
 )
 

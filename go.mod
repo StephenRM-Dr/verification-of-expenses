@@ -1,4 +1,4 @@
-module example.com/m/v2
+module github.com/stephenrm-dr/verification-of-expenses
 
 go 1.26.0
 

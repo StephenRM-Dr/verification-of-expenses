@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"example.com/m/v2/internal/models"
-	"example.com/m/v2/internal/storage"
+	"github.com/stephenrm-dr/verification-of-expenses/internal/models"
+	"github.com/stephenrm-dr/verification-of-expenses/internal/storage"
 	"github.com/mdp/qrterminal/v3"
 	_ "github.com/jackc/pgx/v5/stdlib" // Driver de Postgres (pgx)
 	_ "github.com/lib/pq"              // Driver de Postgres (alternativo)

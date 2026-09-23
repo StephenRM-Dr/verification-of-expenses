@@ -70,7 +70,7 @@ go run .
 
 - `DATABASE_URL` (**required**): PostgreSQL connection string. Append `sslmode=require` for hosted databases.
 - `PORT`: API port (default `8080`).
-- `AWS_*` / `S3_*` (optional): storage credentials. Without them receipts go to `./cargas-brailer`, which is ephemeral on most cloud platforms.
+- `AWS_*` / `S3_*` (optional): storage credentials. Without them receipts go to `./uploads`, which is ephemeral on most cloud platforms.
 
 In a terminal the app shows an interactive menu and serves the API in the background; in Docker or cloud environments it runs the API only. On first run, WhatsApp pairing prints a QR code to the console (also available at `/api/whatsapp/status`).
 
@@ -80,6 +80,6 @@ The backend keeps a long-lived WhatsApp connection, so it runs as a container (`
 
 ## Troubleshooting
 
-- **"Falta DATABASE_URL" / cannot connect to the database** - check that `DATABASE_URL` is set and valid, and that the network allows the connection.
+- **"DATABASE_URL is missing" / cannot connect to the database** - check that `DATABASE_URL` is set and valid, and that the network allows the connection.
 - **WhatsApp reports "not connected"** - scan the QR code again; if the session looks corrupt, call `POST /api/whatsapp/logout` and re-pair.
 - **Receipts disappear after a redeploy** - configure S3-compatible storage; local disk is ephemeral in containers.

@@ -15,12 +15,12 @@ import (
 	"sync" // Added for safe handling of the WhatsApp client
 	"time"
 
-	_ "example.com/m/v2/docs" // Replace with your go.mod module name
-	"example.com/m/v2/internal/db"
-	"example.com/m/v2/internal/export"
-	"example.com/m/v2/internal/models"
-	"example.com/m/v2/internal/storage"
-	"example.com/m/v2/internal/whatsapp"
+	_ "github.com/stephenrm-dr/verification-of-expenses/docs" // Replace with your go.mod module name
+	"github.com/stephenrm-dr/verification-of-expenses/internal/db"
+	"github.com/stephenrm-dr/verification-of-expenses/internal/export"
+	"github.com/stephenrm-dr/verification-of-expenses/internal/models"
+	"github.com/stephenrm-dr/verification-of-expenses/internal/storage"
+	"github.com/stephenrm-dr/verification-of-expenses/internal/whatsapp"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 

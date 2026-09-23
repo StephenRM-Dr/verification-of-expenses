@@ -27,8 +27,8 @@ import (
 	"strings"
 	"time"
 
-	"example.com/m/v2/internal/db"
-	"example.com/m/v2/internal/storage"
+	"github.com/stephenrm-dr/verification-of-expenses/internal/db"
+	"github.com/stephenrm-dr/verification-of-expenses/internal/storage"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
