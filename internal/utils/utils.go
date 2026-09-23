@@ -8,7 +8,7 @@ import (
 	"unicode"
 )
 
-// LimpiarTexto normaliza el texto y capitaliza la primera letra.
+// LimpiarTexto normalizes the text and capitalizes the first letter.
 func LimpiarTexto(s string) string {
 	words := strings.Fields(s)
 	res := strings.Join(words, " ")
@@ -20,7 +20,7 @@ func LimpiarTexto(s string) string {
 	return string(runes)
 }
 
-// LeerCadena lee una línea y ofrece un valor por defecto si está vacío.
+// LeerCadena reads a line and offers a default value if it is empty.
 func LeerCadena(scanner *bufio.Scanner, label string, actual string) string {
 	if actual != "" {
 		fmt.Printf("%s [%s]: ", label, actual)
@@ -35,7 +35,7 @@ func LeerCadena(scanner *bufio.Scanner, label string, actual string) string {
 	return input
 }
 
-// LeerFlotante asegura que la entrada sea un número válido.
+// LeerFlotante ensures the input is a valid number.
 func LeerFlotante(scanner *bufio.Scanner, label string, actual float64) float64 {
 	for {
 		input := LeerCadena(scanner, label, fmt.Sprintf("%.2f", actual))
@@ -43,12 +43,12 @@ func LeerFlotante(scanner *bufio.Scanner, label string, actual float64) float64 
 		if err == nil {
 			return val
 		}
-		fmt.Println("❌ Error: Ingrese un número válido (ej: 1250.50)")
+		fmt.Println("❌ Error: Enter a valid number (e.g. 1250.50)")
 	}
 }
 
-// Pausa detiene la ejecución para que el usuario lea los mensajes de éxito/error.
+// Pausa pauses execution so the user can read the success/error messages.
 func Pausa(scanner *bufio.Scanner) {
-	fmt.Print("\nPresione ENTER para continuar...")
+	fmt.Print("\nPress ENTER to continue...")
 	scanner.Scan()
 }

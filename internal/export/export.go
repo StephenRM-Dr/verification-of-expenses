@@ -7,27 +7,27 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-// GenerateExcel genera un objeto excelize.File con las transacciones.
+// GenerateExcel builds an excelize.File with the transactions.
 func GenerateExcel(transacciones []models.Transaccion) (*excelize.File, error) {
 	f := excelize.NewFile()
 	
-	sheetName := "Historial"
+	sheetName := "Transactions"
 	index, err := f.NewSheet(sheetName)
 	if err != nil {
 		return nil, err
 	}
 
-	// Eliminar la hoja por defecto (Sheet1)
+	// Remove the default sheet (Sheet1)
 	f.DeleteSheet("Sheet1")
 
-	// Encabezados
-	headers := []string{"ID", "Fecha", "Descripción", "Monto", "Ciudad", "Banco", "Referencia"}
+	// Headers
+	headers := []string{"ID", "Date", "Description", "Amount", "City", "Bank", "Reference"}
 	for i, h := range headers {
 		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
 		f.SetCellValue(sheetName, cell, h)
 	}
 
-	// Estilo para el encabezado
+	// Header style
 	style, err := f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{Bold: true},
 		Fill: excelize.Fill{Type: "pattern", Color: []string{"#D3D3D3"}, Pattern: 1},
@@ -36,7 +36,7 @@ func GenerateExcel(transacciones []models.Transaccion) (*excelize.File, error) {
 		f.SetCellStyle(sheetName, "A1", "G1", style)
 	}
 
-	// Datos
+	// Data
 	for rowIdx, t := range transacciones {
 		row := rowIdx + 2
 		f.SetCellValue(sheetName, "A"+strconv.Itoa(row), t.ID)
@@ -58,7 +58,7 @@ func GenerateExcel(transacciones []models.Transaccion) (*excelize.File, error) {
 	return f, nil
 }
 
-// ExportToExcel genera un archivo Excel físico (usado por la CLI).
+// ExportToExcel writes a physical Excel file (used by the CLI).
 func ExportToExcel(transacciones []models.Transaccion, fileName string) error {
 	f, err := GenerateExcel(transacciones)
 	if err != nil {

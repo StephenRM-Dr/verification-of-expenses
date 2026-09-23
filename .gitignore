@@ -1,26 +1,26 @@
-# Binarios y Ejecutables
+# Binaries
 *.exe
-main
-warecover
-dbmigrate
+/main
+/warecover
+/dbmigrate
 
-# WhatsApp y Persistencia
+# WhatsApp session and local storage
 *.db
 *.db-shm
 *.db-wal
 cargas-brailer/
 uploads/
 
-# Reportes generados
+# Generated reports
 *.xlsx
 
-# Node.js (si se agrega frontend en el futuro)
+# Node.js and env files
 node_modules/
 .env
 .env.*
 !.env.example
 
-# Otros
+# Misc
 .DS_Store
 dist/
 bin/

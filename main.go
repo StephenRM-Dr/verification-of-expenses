@@ -28,18 +28,18 @@ import (
 var waClient *whatsapp.WAClient
 
 func main() {
-	// Carga el .env local si existe. En Koyeb no hay archivo y las variables
-	// llegan del entorno, así que su ausencia no es un error.
+	// Load the local .env if present. On Koyeb there is no file and the variables
+	// come from the environment, so its absence is not an error.
 	if err := godotenv.Load(); err == nil {
-		log.Println("📄 Configuración cargada desde .env")
+		log.Println("📄 Configuration loaded from .env")
 	}
 
-	// Sin credencial no se arranca: antes había una cadena de producción
-	// embebida como valor por defecto, de modo que un despliegue mal configurado
-	// se conectaba a la base equivocada sin avisar.
+	// Do not start without a credential: a production connection string used to be
+	// embedded as the default value, so a misconfigured deployment would
+	// silently connect to the wrong database.
 	dbConnStr := os.Getenv("DATABASE_URL")
 	if dbConnStr == "" {
-		log.Fatal("Falta DATABASE_URL: defínela en el entorno o en un archivo .env (ver .env.example)")
+		log.Fatal("DATABASE_URL is missing: set it in the environment or in a .env file (see .env.example)")
 	}
 
 	port := os.Getenv("PORT")
@@ -57,64 +57,64 @@ func main() {
 		log.Fatal("Error initializing storage:", err)
 	}
 
-	// Iniciar Servidor API inmediatamente para pasar Health Checks
-	fmt.Printf("🚀 Iniciando API Server en puerto %s...\n", port)
+	// Start the API server immediately so health checks pass
+	fmt.Printf("🚀 Starting API server on port %s...\n", port)
 	apiServer := api.NewServer(database, nil)
 	go func() {
 		if err := apiServer.Start(port); err != nil {
-			log.Printf("❌ Error crítico en API Server: %v", err)
+			log.Printf("❌ Critical API server error: %v", err)
 		}
 	}()
 
-	// Iniciar WhatsApp en segundo plano
-	fmt.Println("⏳ Inicializando WhatsApp...")
+	// Start WhatsApp in the background
+	fmt.Println("⏳ Initializing WhatsApp...")
 	go func() {
 		client, err := whatsapp.Connect()
 		if err != nil {
-			fmt.Printf("\n⚠️  Aviso: No se pudo conectar a WhatsApp: %v\n", err)
+			fmt.Printf("\n⚠️  Warning: Could not connect to WhatsApp: %v\n", err)
 			return
 		}
 		waClient = client
 		apiServer.SetWhatsAppClient(waClient)
-		fmt.Println("\n✅ WhatsApp Conectado.")
+		fmt.Println("\n✅ WhatsApp connected.")
 	}()
 
-	// Mantener la Base de Datos "caliente" (Keep-alive) para evitar auto-suspend de Neon
+	// Keep the database "warm" (keep-alive) to avoid Neon auto-suspend
 	go func() {
 		for {
 			time.Sleep(2 * time.Minute)
 			if database != nil {
 				err := database.Ping()
 				if err != nil {
-					fmt.Printf("⚠️  Keep-alive: Error al conectar con DB: %v\n", err)
+					fmt.Printf("⚠️  Keep-alive: Error connecting to DB: %v\n", err)
 				} else {
-					fmt.Println("保持 (Keep-alive): DB activa")
+					fmt.Println("Keep-alive: DB active")
 				}
 			}
 		}
 	}()
 
-	// Solo ejecutar el loop interactivo si estamos en una terminal (TTY)
+	// Only run the interactive loop when attached to a terminal (TTY)
 	fileInfo, _ := os.Stdin.Stat()
 	if (fileInfo.Mode() & os.ModeCharDevice) == 0 {
-		fmt.Println("🚀 Ejecutando en modo no interactivo (Cloud/Docker)")
-		select {} // Bloquear para mantener el contenedor vivo
+		fmt.Println("🚀 Running in non-interactive mode (Cloud/Docker)")
+		select {} // Block to keep the container alive
 	}
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
 		fmt.Println("\n===============================")
-		fmt.Println("      BRAILER LEDGER (GO)      ")
+		fmt.Println("   VERIFICATION OF EXPENSES    ")
 		fmt.Println("===============================")
-		fmt.Println("1. Ingresar Data")
-		fmt.Println("2. Ver Histórico")
-		fmt.Println("3. Buscar Registro")
-		fmt.Println("4. Eliminar Registro")
-		fmt.Println("5. Editar Registro")
-		fmt.Println("6. Exportar a Excel")
-		fmt.Println("7. Enviar a WhatsApp")
-		fmt.Println("8. Salir")
-		fmt.Print("\nSeleccione una opción: ")
+		fmt.Println("1. Add Transaction")
+		fmt.Println("2. View History")
+		fmt.Println("3. Search Transactions")
+		fmt.Println("4. Delete Transaction")
+		fmt.Println("5. Edit Transaction")
+		fmt.Println("6. Export to Excel")
+		fmt.Println("7. Send to WhatsApp")
+		fmt.Println("8. Exit")
+		fmt.Print("\nSelect an option: ")
 
 		scanner.Scan()
 		opcion := scanner.Text()
@@ -136,38 +136,38 @@ func main() {
 		case "7":
 			enviarWhatsApp(database, scanner)
 		case "8":
-			fmt.Println("Saliendo del sistema...")
+			fmt.Println("Exiting...")
 			return
 		default:
-			fmt.Println("Opción no válida.")
+			fmt.Println("Invalid option.")
 		}
 	}
 }
 
 func crearRegistro(database *sql.DB, scanner *bufio.Scanner) {
-	fmt.Println("\n--- NUEVO INGRESO ---")
+	fmt.Println("\n--- NEW TRANSACTION ---")
 
 	t := promptTransaction(scanner, models.Transaccion{})
 
 	err := db.CreateTransaction(database, t)
 	if err != nil {
-		fmt.Println("Error al guardar:", err)
+		fmt.Println("Error saving:", err)
 	} else {
-		fmt.Println("¡Registro exitoso!")
+		fmt.Println("Transaction saved!")
 	}
 }
 
 func leerRegistros(database *sql.DB) {
 	transacciones, err := db.ListTransactions(database)
 	if err != nil {
-		fmt.Println("Error al leer registros:", err)
+		fmt.Println("Error reading transactions:", err)
 		return
 	}
 	printTable(transacciones)
 }
 
 func printTable(transacciones []models.Transaccion) {
-	fmt.Printf("\n%-4s | %-12s | %-20s | %-10s | %-15s | %-s\n", "ID", "Fecha", "Desc", "Monto", "Banco", "Ref")
+	fmt.Printf("\n%-4s | %-12s | %-20s | %-10s | %-15s | %-s\n", "ID", "Date", "Desc", "Amount", "Bank", "Ref")
 	fmt.Println(strings.Repeat("-", 100))
 
 	var total float64
@@ -177,22 +177,22 @@ func printTable(transacciones []models.Transaccion) {
 		total += t.Monto
 	}
 	fmt.Println(strings.Repeat("-", 100))
-	fmt.Printf("%62s Total: Bs. %.2f\n", "", total)
+	fmt.Printf("%62s Total: %.2f\n", "", total)
 }
 
 func buscarRegistros(database *sql.DB, scanner *bufio.Scanner) {
-	fmt.Print("\nIngrese término de búsqueda: ")
+	fmt.Print("\nEnter search term: ")
 	scanner.Scan()
 	query := scanner.Text()
 
 	transacciones, err := db.SearchTransactions(database, query)
 	if err != nil {
-		fmt.Println("Error en búsqueda:", err)
+		fmt.Println("Search error:", err)
 		return
 	}
 
 	if len(transacciones) == 0 {
-		fmt.Println("No se encontraron registros.")
+		fmt.Println("No transactions found.")
 	} else {
 		printTable(transacciones)
 	}
@@ -201,48 +201,48 @@ func buscarRegistros(database *sql.DB, scanner *bufio.Scanner) {
 
 func eliminarRegistro(database *sql.DB, scanner *bufio.Scanner) {
 	leerRegistros(database)
-	fmt.Print("\nID del registro a eliminar: ")
+	fmt.Print("\nID of the transaction to delete: ")
 	scanner.Scan()
 	var id int
 	fmt.Sscanf(scanner.Text(), "%d", &id)
 
 	err := db.DeleteTransaction(database, id)
 	if err != nil {
-		fmt.Println("Error al eliminar:", err)
+		fmt.Println("Error deleting:", err)
 	} else {
-		fmt.Println("Registro borrado correctamente.")
+		fmt.Println("Transaction deleted successfully.")
 	}
 }
 
 func editarRegistro(database *sql.DB, scanner *bufio.Scanner) {
 	leerRegistros(database)
-	fmt.Print("\nID del registro a editar: ")
+	fmt.Print("\nID of the transaction to edit: ")
 	scanner.Scan()
 	var id int
 	fmt.Sscanf(scanner.Text(), "%d", &id)
 
 	existing, err := db.GetTransactionByID(database, id)
 	if err != nil {
-		fmt.Println("Error: No se encontró el registro o error en DB:", err)
+		fmt.Println("Error: Transaction not found or DB error:", err)
 		return
 	}
 
-	fmt.Printf("\n--- EDITANDO REGISTRO [%d] ---\n", id)
-	fmt.Println("Presione ENTER para mantener el valor actual.")
+	fmt.Printf("\n--- EDITING TRANSACTION [%d] ---\n", id)
+	fmt.Println("Press ENTER to keep the current value.")
 
 	updated := promptTransaction(scanner, existing)
 	updated.ID = id
 
 	err = db.UpdateTransaction(database, updated)
 	if err != nil {
-		fmt.Println("Error al actualizar:", err)
+		fmt.Println("Error updating:", err)
 	} else {
-		fmt.Println("¡Registro actualizado con éxito!")
+		fmt.Println("Transaction updated successfully!")
 	}
 }
 
 func exportarExcel(database *sql.DB, scanner *bufio.Scanner) {
-	fmt.Print("\n¿Desea exportar TODO (t) o una BÚSQUEDA (b)? [t]: ")
+	fmt.Print("\nExport EVERYTHING (t) or a SEARCH (b)? [t]: ")
 	scanner.Scan()
 	tipo := strings.ToLower(scanner.Text())
 
@@ -250,7 +250,7 @@ func exportarExcel(database *sql.DB, scanner *bufio.Scanner) {
 	var err error
 
 	if tipo == "b" {
-		fmt.Print("Término de búsqueda: ")
+		fmt.Print("Search term: ")
 		scanner.Scan()
 		transacciones, err = db.SearchTransactions(database, scanner.Text())
 	} else {
@@ -258,11 +258,11 @@ func exportarExcel(database *sql.DB, scanner *bufio.Scanner) {
 	}
 
 	if err != nil || len(transacciones) == 0 {
-		fmt.Println("No hay datos para exportar.")
+		fmt.Println("No data to export.")
 		return
 	}
 
-	fmt.Print("Nombre del archivo [reporte_pagos.xlsx]: ")
+	fmt.Print("File name [reporte_pagos.xlsx]: ")
 	scanner.Scan()
 	fileName := scanner.Text()
 	if fileName == "" {
@@ -274,83 +274,83 @@ func exportarExcel(database *sql.DB, scanner *bufio.Scanner) {
 
 	err = export.ExportToExcel(transacciones, fileName)
 	if err != nil {
-		fmt.Println("Error al exportar:", err)
+		fmt.Println("Error exporting:", err)
 	} else {
-		fmt.Printf("¡Exportación exitosa! Archivo: %s\n", fileName)
+		fmt.Printf("Export successful! File: %s\n", fileName)
 	}
 	utils.Pausa(scanner)
 }
 
 func enviarWhatsApp(database *sql.DB, scanner *bufio.Scanner) {
 	if waClient == nil {
-		fmt.Println("❌ WhatsApp no está conectado todavía.")
+		fmt.Println("❌ WhatsApp is not connected yet.")
 		return
 	}
 
 	leerRegistros(database)
-	fmt.Print("\nID del registro a enviar: ")
+	fmt.Print("\nID of the transaction to send: ")
 	scanner.Scan()
 	var id int
 	fmt.Sscanf(scanner.Text(), "%d", &id)
 
 	t, err := db.GetTransactionByID(database, id)
 	if err != nil {
-		fmt.Println("ID no válido.")
+		fmt.Println("Invalid ID.")
 		return
 	}
 
-	fmt.Print("Destinatario (Enter para grupo 'Prueba' o JID): ")
+	fmt.Print("Recipient (Enter for group 'Prueba' or JID): ")
 	scanner.Scan()
 	recipient := strings.TrimSpace(scanner.Text())
 
 	var targetJID string
 
 	if recipient == "" || strings.ToLower(recipient) == "prueba" {
-		fmt.Println("🔍 Buscando grupo 'Prueba'...")
+		fmt.Println("🔍 Looking for group 'Prueba'...")
 		jid, err := waClient.GetGroupJIDByName("Prueba")
 		if err != nil {
 			fmt.Printf("❌ Error: %v\n", err)
 			return
 		}
 		targetJID = jid.String()
-		fmt.Printf("✅ Grupo 'Prueba' encontrado: %s\n", targetJID)
+		fmt.Printf("✅ Group 'Prueba' found: %s\n", targetJID)
 	} else if !strings.Contains(recipient, "@") {
-		// Intentar buscar por nombre si no tiene @
-		fmt.Printf("🔍 Buscando grupo '%s'...\n", recipient)
+		// Try to look it up by name if it has no @
+		fmt.Printf("🔍 Looking for group '%s'...\n", recipient)
 		jid, err := waClient.GetGroupJIDByName(recipient)
 		if err != nil {
-			fmt.Printf("❌ %v. Intenta ingresar el JID completo (ej: 12345@g.us)\n", err)
+			fmt.Printf("❌ %v. Try entering the full JID (e.g. 12345@g.us)\n", err)
 			return
 		}
 		targetJID = jid.String()
-		fmt.Printf("✅ Grupo encontrado: %s\n", targetJID)
+		fmt.Printf("✅ Group found: %s\n", targetJID)
 	} else {
 		targetJID = recipient
 	}
 
-	// Enviar en segundo plano
+	// Send in the background
 	go func() {
 		err := waClient.SendTransaction(targetJID, t)
 		if err != nil {
-			fmt.Printf("\n❌ Error enviando a WhatsApp (ID %d): %v\n", id, err)
+			fmt.Printf("\n❌ Error sending to WhatsApp (ID %d): %v\n", id, err)
 		} else {
-			fmt.Printf("\n✅ Registro %d enviado a WhatsApp en segundo plano.\n", id)
+			fmt.Printf("\n✅ Transaction %d sent to WhatsApp in the background.\n", id)
 		}
 	}()
 
-	fmt.Println("🚀 Envío iniciado en segundo plano...")
+	fmt.Println("🚀 Send started in the background...")
 }
 
 func promptTransaction(scanner *bufio.Scanner, current models.Transaccion) models.Transaccion {
 	t := current
 
-	t.FechaPago = utils.LeerCadena(scanner, "Fecha de pago (DD/MM/YYYY)", t.FechaPago)
-	t.Descripcion = utils.LimpiarTexto(utils.LeerCadena(scanner, "Descripción", t.Descripcion))
-	t.Monto = utils.LeerFlotante(scanner, "Monto", t.Monto)
-	t.Ciudad = utils.LimpiarTexto(utils.LeerCadena(scanner, "Ciudad", t.Ciudad))
-	t.Banco = utils.LimpiarTexto(utils.LeerCadena(scanner, "Banco Usado", t.Banco))
-	t.Referencia = utils.LeerCadena(scanner, "Referencia", t.Referencia)
-	t.ImagenPath = utils.LeerCadena(scanner, "Ruta de la Imagen (opcional)", t.ImagenPath)
+	t.FechaPago = utils.LeerCadena(scanner, "Payment date (DD/MM/YYYY)", t.FechaPago)
+	t.Descripcion = utils.LimpiarTexto(utils.LeerCadena(scanner, "Description", t.Descripcion))
+	t.Monto = utils.LeerFlotante(scanner, "Amount", t.Monto)
+	t.Ciudad = utils.LimpiarTexto(utils.LeerCadena(scanner, "City", t.Ciudad))
+	t.Banco = utils.LimpiarTexto(utils.LeerCadena(scanner, "Bank used", t.Banco))
+	t.Referencia = utils.LeerCadena(scanner, "Reference", t.Referencia)
+	t.ImagenPath = utils.LeerCadena(scanner, "Image path (optional)", t.ImagenPath)
 
 	return t
 }

@@ -12,10 +12,10 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync" // Añadido para manejo seguro del cliente de WhatsApp
+	"sync" // Added for safe handling of the WhatsApp client
 	"time"
 
-	_ "example.com/m/v2/docs" // Reemplaza con el nombre de tu módulo go.mod
+	_ "example.com/m/v2/docs" // Replace with your go.mod module name
 	"example.com/m/v2/internal/db"
 	"example.com/m/v2/internal/export"
 	"example.com/m/v2/internal/models"
@@ -27,9 +27,9 @@ import (
 type Server struct {
 	db       *sql.DB
 	waClient *whatsapp.WAClient
-	mu       sync.RWMutex // Protege el acceso a waClient
-	sending  map[int]bool // Trackea transacciones en proceso de envío
-	smu      sync.Mutex   // Protege el acceso al mapa 'sending'
+	mu       sync.RWMutex // Guards access to waClient
+	sending  map[int]bool // Tracks transactions currently being sent
+	smu      sync.Mutex   // Guards access to the 'sending' map
 }
 
 func NewServer(database *sql.DB, wa *whatsapp.WAClient) *Server {
@@ -40,7 +40,7 @@ func NewServer(database *sql.DB, wa *whatsapp.WAClient) *Server {
 	}
 }
 
-// SetWhatsAppClient permite inyectar el cliente una vez conectado
+// SetWhatsAppClient allows injecting the client once connected
 func (s *Server) SetWhatsAppClient(wa *whatsapp.WAClient) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -51,7 +51,7 @@ func (s *Server) Start(port string) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/docs/", httpSwagger.WrapHandler)
 	
-	// Endpoint de health check para Koyeb y otros servicios cloud
+	// Health check endpoint for Koyeb and other cloud services
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
@@ -61,7 +61,7 @@ func (s *Server) Start(port string) error {
 		w.Write([]byte("OK"))
 	})
 
-	// Middleware para CORS y Logging de depuración
+	// Middleware for CORS and debug logging
 	corsMiddleware := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			log.Printf("📡 [API] %s %s from %s", r.Method, r.URL.Path, r.RemoteAddr)
@@ -85,20 +85,20 @@ func (s *Server) Start(port string) error {
 	mux.HandleFunc("/api/whatsapp/logout", s.handleWhatsAppLogout)
 	mux.HandleFunc("/api/export", s.handleExport)
 
-	// Servir comprobantes desde el backend de almacenamiento activo (bucket o disco)
+	// Serve receipts from the active storage backend (bucket or disk)
 	mux.HandleFunc("/uploads/", s.handleUploads)
 
 	fmt.Printf("🚀 API Server running on http://localhost:%s\n", port)
 	return http.ListenAndServe(":"+port, corsMiddleware(mux))
 }
 
-// updateAndCleanup actualiza la transacción y borra el comprobante anterior si
-// fue reemplazado por otro.
+// updateAndCleanup updates the transaction and deletes the previous receipt if
+// it was replaced by another one.
 //
-// El formulario solo envía el campo "image" cuando el usuario elige un archivo
-// nuevo; si conserva el existente reenvía "imagen_path" con la misma ruta. Por
-// eso la condición es que la ruta guardada cambie: así se limpia el archivo
-// sustituido sin tocar el que sigue en uso.
+// The form only sends the "image" field when the user picks a new file;
+// if they keep the existing one it resends "imagen_path" with the same path.
+// That is why the condition is that the stored path changes: this cleans up the
+// replaced file without touching the one still in use.
 func (s *Server) updateAndCleanup(ctx context.Context, t models.Transaccion) error {
 	previous, findErr := db.GetTransactionByID(s.db, t.ID)
 
@@ -110,16 +110,16 @@ func (s *Server) updateAndCleanup(ctx context.Context, t models.Transaccion) err
 		return nil
 	}
 
-	// Igual que en el borrado, un fallo aquí no invalida la actualización:
-	// queda un huérfano registrado en el log en vez de un error para el usuario.
+	// As with deletion, a failure here does not invalidate the update:
+	// an orphan is recorded in the log instead of an error for the user.
 	if err := storage.Delete(ctx, previous.ImagenPath); err != nil {
-		log.Printf("⚠️  [uploads] Transacción %d actualizada, pero no se pudo borrar el comprobante anterior %s: %v",
+		log.Printf("⚠️  [uploads] Transaction %d updated, but the previous receipt %s could not be deleted: %v",
 			t.ID, previous.ImagenPath, err)
 	}
 	return nil
 }
 
-// handleUploads sirve un comprobante desde el bucket S3 o el disco local.
+// handleUploads serves a receipt from the S3 bucket or the local disk.
 func (s *Server) handleUploads(w http.ResponseWriter, r *http.Request) {
 	name := storage.Name(r.URL.Path)
 	if name == "" || name == "." || name == "/" {
@@ -142,7 +142,7 @@ func (s *Server) handleUploads(w http.ResponseWriter, r *http.Request) {
 	io.Copy(w, file)
 }
 
-// handleTransactions nuclea el CRUD de transacciones.
+// handleTransactions handles the transaction CRUD.
 // @Summary      Manage transactions (CRUD)
 // @Description  List (GET), create (POST), update (PUT) and delete (DELETE) financial transactions, using multipart/form-data or JSON.
 // @Tags         transactions
@@ -205,7 +205,7 @@ func (s *Server) handleTransactions(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Extraer datos del form
+		// Extract form data
 		monto, _ := strconv.ParseFloat(r.FormValue("monto"), 64)
 		t := models.Transaccion{
 			FechaPago:   r.FormValue("fecha_pago"),
@@ -214,7 +214,7 @@ func (s *Server) handleTransactions(w http.ResponseWriter, r *http.Request) {
 			Ciudad:      r.FormValue("ciudad"),
 			Banco:       r.FormValue("banco_usado"),
 			Referencia:  r.FormValue("referencia"),
-			ImagenPath:  r.FormValue("imagen_path"), // Mantener imagen existente si no se sube una nueva
+			ImagenPath:  r.FormValue("imagen_path"), // Keep the existing image if a new one is not uploaded
 		}
 
 		if r.Method == "PUT" {
@@ -222,7 +222,7 @@ func (s *Server) handleTransactions(w http.ResponseWriter, r *http.Request) {
 			t.ID = id
 		}
 
-		// Manejar archivo si existe
+		// Handle the file if present
 		file, handler, err := r.FormFile("image")
 		if err == nil {
 			defer file.Close()
@@ -237,7 +237,7 @@ func (s *Server) handleTransactions(w http.ResponseWriter, r *http.Request) {
 
 			savedPath, err := storage.Save(r.Context(), fileName, file, handler.Size, contentType)
 			if err != nil {
-				log.Printf("❌ [uploads] Error guardando %s: %v", fileName, err)
+				log.Printf("❌ [uploads] Error saving %s: %v", fileName, err)
 				http.Error(w, "Failed to save image", http.StatusInternalServerError)
 				return
 			}
@@ -268,8 +268,8 @@ func (s *Server) handleTransactions(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Leer la ruta del comprobante antes de borrar la fila: después ya no
-		// habría forma de saber qué archivo quedó huérfano en el bucket.
+		// Read the receipt path before deleting the row: afterwards there would be
+		// no way to know which file was left orphaned in the bucket.
 		existing, findErr := db.GetTransactionByID(s.db, id)
 
 		if err := db.DeleteTransaction(s.db, id); err != nil {
@@ -277,12 +277,12 @@ func (s *Server) handleTransactions(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// El archivo se borra después de la fila: si el storage falla, la
-		// transacción ya se eliminó y solo queda un huérfano, que es preferible
-		// a bloquear la operación del usuario.
+		// The file is deleted after the row: if storage fails, the transaction
+		// is already gone and only an orphan remains, which is preferable
+		// to blocking the user's operation.
 		if findErr == nil && existing.ImagenPath != "" {
 			if err := storage.Delete(r.Context(), existing.ImagenPath); err != nil {
-				log.Printf("⚠️  [uploads] Transacción %d eliminada, pero no se pudo borrar %s: %v",
+				log.Printf("⚠️  [uploads] Transaction %d deleted, but %s could not be deleted: %v",
 					id, existing.ImagenPath, err)
 			}
 		}
@@ -296,7 +296,7 @@ func (s *Server) handleTransactions(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// handleSummary procesa métricas globales y mensuales.
+// handleSummary computes overall and monthly metrics.
 // @Summary      Get summary metrics
 // @Description  Returns the overall total, the current month's total and the number of recorded transactions.
 // @Tags         metrics
@@ -333,7 +333,7 @@ func (s *Server) handleSummary(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(summary)
 }
 
-// handleSendWhatsApp despacha mensajes concurrentes asíncronos.
+// handleSendWhatsApp dispatches concurrent asynchronous messages.
 // @Summary      Send a transaction to WhatsApp
 // @Description  Asynchronously queues a structured report to a WhatsApp group or contact, preventing concurrent duplicate sends.
 // @Tags         whatsapp
@@ -381,7 +381,7 @@ func (s *Server) handleSendWhatsApp(w http.ResponseWriter, r *http.Request) {
 	if !strings.Contains(recipient, "@") {
 		jid, err := s.waClient.GetGroupJIDByName(recipient)
 		if err != nil {
-			log.Printf("❌ Error: Grupo '%s' no encontrado: %v", recipient, err)
+			log.Printf("❌ Error: Group '%s' not found: %v", recipient, err)
 			http.Error(w, "Group not found", http.StatusNotFound)
 			return
 		}
@@ -393,7 +393,7 @@ func (s *Server) handleSendWhatsApp(w http.ResponseWriter, r *http.Request) {
 	s.smu.Lock()
 	if s.sending[id] {
 		s.smu.Unlock()
-		log.Printf("⚠️  Envío duplicado omitido para ID %d", id)
+		log.Printf("⚠️  Duplicate send skipped for ID %d", id)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{"status": "processing", "message": "Already sending"})
 		return
@@ -410,9 +410,9 @@ func (s *Server) handleSendWhatsApp(w http.ResponseWriter, r *http.Request) {
 
 		err := wa.SendTransaction(targetJID, t)
 		if err != nil {
-			log.Printf("❌ Error enviando WhatsApp ID %d: %v", id, err)
+			log.Printf("❌ Error sending WhatsApp ID %d: %v", id, err)
 		} else {
-			log.Printf("✅ WhatsApp ID %d enviado con éxito.", id)
+			log.Printf("✅ WhatsApp ID %d sent successfully.", id)
 		}
 	}()
 
@@ -421,7 +421,7 @@ func (s *Server) handleSendWhatsApp(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "queued"})
 }
 
-// handleWhatsAppStatus audita el estado del cliente de WhatsApp y sus canales vinculados.
+// handleWhatsAppStatus reports the WhatsApp client state and its linked channels.
 // @Summary      WhatsApp connection status
 // @Description  Returns the current connection state, any persistent error, the active pairing QR code, or the list of joined groups.
 // @Tags         whatsapp
@@ -456,7 +456,7 @@ func (s *Server) handleWhatsAppStatus(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(status)
 }
 
-// handleWhatsAppLogout revoca credenciales de sesión activa.
+// handleWhatsAppLogout revokes the active session credentials.
 // @Summary      Log out of WhatsApp and regenerate the QR code
 // @Description  Unlinks the device and asynchronously starts a fresh pairing flow that serves a new QR code.
 // @Tags         whatsapp
@@ -479,7 +479,7 @@ func (s *Server) handleWhatsAppLogout(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	fmt.Println("🔄 Reiniciando conexión de WhatsApp para nuevo QR...")
+	fmt.Println("🔄 Restarting WhatsApp connection for a new QR...")
 	go func() {
 		newClient, err := whatsapp.Connect()
 		if err != nil {
@@ -493,7 +493,7 @@ func (s *Server) handleWhatsAppLogout(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "resetting"})
 }
 
-// handleExport empaqueta la base de datos completa a Excel format estructurado.
+// handleExport packages the full database as a structured Excel file.
 // @Summary      Export transactions to Excel (.xlsx)
 // @Description  Downloads the full transaction history as an Excel workbook.
 // @Tags         export
@@ -516,7 +516,7 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	defer f.Close()
 
 	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	w.Header().Set("Content-Disposition", "attachment; filename=reporte_brailer.xlsx")
+	w.Header().Set("Content-Disposition", "attachment; filename=expense_report.xlsx")
 
 	if err := f.Write(w); err != nil {
 		log.Printf("Error writing Excel to response: %v", err)

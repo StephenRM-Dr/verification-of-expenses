@@ -1,6 +1,6 @@
 package models
 
-// Transaccion representa la estructura de los datos de un movimiento financiero.
+// Transaccion represents the data structure of a financial transaction.
 type Transaccion struct {
 	ID          int     `json:"id"`
 	FechaPago   string  `json:"fecha_pago"`

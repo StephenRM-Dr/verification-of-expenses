@@ -26,7 +26,7 @@ import (
 )
 
 func init() {
-	// Truco: Registrar modernc como "sqlite3" para satisfacer a whatsmeow
+	// Trick: register modernc as "sqlite3" to satisfy whatsmeow
 	sql.Register("sqlite3", &sqlite.Driver{})
 }
 
@@ -42,7 +42,7 @@ var (
 	waContainer   *sqlstore.Container
 )
 
-// Connect establece la conexión con WhatsApp, manejando la sesión en PostgreSQL si está disponible, o SQLite como fallback.
+// Connect establishes the WhatsApp connection, keeping the session in PostgreSQL if available, or SQLite as a fallback.
 func Connect() (*WAClient, error) {
 	if waContainer == nil {
 		dbLog := waLog.Stdout("Database", "ERROR", true)
@@ -50,13 +50,13 @@ func Connect() (*WAClient, error) {
 		var driver string
 		var dsn string
 
-		// Intentar usar PostgreSQL (Neon) para persistencia en la nube
+		// Try to use PostgreSQL (Neon) for cloud persistence
 		pgUrl := os.Getenv("DATABASE_URL")
 		if pgUrl != "" {
 			// USAR PGX PARA MEJOR COMPATIBILIDAD CON POOLERS Y BINARY DATA
 			driver = "pgx"
 			dsn = sanitizeDSN(pgUrl)
-			fmt.Printf("🚀 WhatsApp: Usando PostgreSQL (pgx) para persistencia de sesión. (Host: %s)\n", getHostFromDSN(dsn))
+			fmt.Printf("🚀 WhatsApp: Using PostgreSQL (pgx) for session persistence. (Host: %s)\n", getHostFromDSN(dsn))
 		} else {
 			// Fallback local a SQLite
 			dbPath := os.Getenv("WA_DB_PATH")
@@ -65,7 +65,7 @@ func Connect() (*WAClient, error) {
 			}
 			driver = "sqlite3"
 			dsn = fmt.Sprintf("file:%s?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=busy_timeout(10000)&cache=shared", dbPath)
-			fmt.Println("💻 WhatsApp: Usando SQLite local para persistencia de sesión.")
+			fmt.Println("💻 WhatsApp: Using local SQLite for session persistence.")
 		}
 		
 		container, err := sqlstore.New(context.Background(), driver, dsn, dbLog)
@@ -86,7 +86,7 @@ func Connect() (*WAClient, error) {
 	GlobalWA = wa
 
 	if client.Store.ID == nil {
-		// No hay sesión: capturar QR
+		// No session: capture the QR
 		qrChan, _ := client.GetQRChannel(context.Background())
 		err = client.Connect()
 		if err != nil {
@@ -103,7 +103,7 @@ func Connect() (*WAClient, error) {
 				} else if evt.Event == "success" {
 					wa.QRCode = ""
 					wa.IsConnected = true
-					fmt.Println("✅ Vinculación exitosa via QR.")
+					fmt.Println("✅ Pairing successful via QR.")
 				}
 			}
 		}()
@@ -115,22 +115,22 @@ func Connect() (*WAClient, error) {
 		}
 		wa.IsConnected = true
 		wa.LastError = ""
-		fmt.Printf("✅ WhatsApp reconectado automáticamente as %s.\n", deviceStore.ID.String())
+		fmt.Printf("✅ WhatsApp reconnected automatically as %s.\n", deviceStore.ID.String())
 	}
 
 	return wa, nil
 }
 
-// Logout cierra la sesión actual de forma permanente (desvincula el dispositivo).
+// Logout permanently closes the current session (unlinks the device).
 func (wa *WAClient) Logout() error {
 	if wa.Client == nil {
-		return fmt.Errorf("cliente no inicializado")
+		return fmt.Errorf("client not initialized")
 	}
 	
-	// Unpair desvincula el dispositivo de los servidores de WA
+	// Unpair unlinks the device from the WA servers
 	err := wa.Client.Logout(context.Background())
 	if err != nil {
-		fmt.Printf("⚠️ Error durante Logout (unpair): %v\n", err)
+		fmt.Printf("⚠️ Error during logout (unpair): %v\n", err)
 		// Intentamos desconectar igual
 	}
 	
@@ -141,7 +141,7 @@ func (wa *WAClient) Logout() error {
 	return nil
 }
 
-// readAttachment carga el comprobante desde el backend de almacenamiento activo.
+// readAttachment loads the receipt from the active storage backend.
 func readAttachment(fileName string) ([]byte, error) {
 	f, err := storage.Open(context.Background(), fileName)
 	if err != nil {
@@ -151,29 +151,29 @@ func readAttachment(fileName string) ([]byte, error) {
 	return io.ReadAll(f)
 }
 
-// SendTransaction envía una transacción estructurada a un destinatario (JID).
+// SendTransaction sends a structured transaction to a recipient (JID).
 func (wa *WAClient) SendTransaction(recipient string, t models.Transaccion) error {
-	fmt.Printf("📩 [WA] Iniciando proceso para ID %d -> Destinatario: %s\n", t.ID, recipient)
+	fmt.Printf("📩 [WA] Starting process for ID %d -> Recipient: %s\n", t.ID, recipient)
 	jid, err := types.ParseJID(recipient)
 	if err != nil {
-		fmt.Printf("❌ [WA] Error parseando JID '%s': %v\n", recipient, err)
+		fmt.Printf("❌ [WA] Error parsing JID '%s': %v\n", recipient, err)
 		return err
 	}
 
-	messageText := fmt.Sprintf("*NUEVO REGISTRO - BRAILER LEDGER*\n\n"+
-		"*Fecha:* %s\n"+
-		"*Descripción:* %s\n"+
-		"*Monto:* Bs. %.2f\n"+
-		"*Referencia:* %s\n"+
-		"*Banco:* %s\n"+
-		"*Ciudad:* %s\n",
+	messageText := fmt.Sprintf("*NEW TRANSACTION - VERIFICATION OF EXPENSES*\n\n"+
+		"*Date:* %s\n"+
+		"*Description:* %s\n"+
+		"*Amount:* %.2f\n"+
+		"*Reference:* %s\n"+
+		"*Bank:* %s\n"+
+		"*City:* %s\n",
 		t.FechaPago, t.Descripcion, t.Monto, t.Referencia, t.Banco, t.Ciudad)
 
-	// Si hay imagen, intentar enviarla
+	// If there is an image, try to send it
 	if t.ImagenPath != "" {
 		fileName := storage.Name(t.ImagenPath)
 
-		fmt.Printf("🔍 [WA] Buscando comprobante: %s\n", fileName)
+		fmt.Printf("🔍 [WA] Looking for receipt: %s\n", fileName)
 		data, err := readAttachment(fileName)
 		if err == nil {
 			ext := strings.ToLower(filepath.Ext(fileName))
@@ -202,10 +202,10 @@ func (wa *WAClient) SendTransaction(recipient string, t models.Transaccion) erro
 				mediaType = whatsmeow.MediaDocument
 			}
 
-			fmt.Printf("📤 [WA] Subiendo archivo (%s) a WhatsApp (%d bytes)...\n", mediaType, len(data))
+			fmt.Printf("📤 [WA] Uploading file (%s) to WhatsApp (%d bytes)...\n", mediaType, len(data))
 			resp, err := wa.Client.Upload(context.Background(), data, mediaType)
 			if err != nil {
-				fmt.Printf("⚠️  [WA] Error al subir archivo (ID %d): %v. Reintentando solo texto...\n", t.ID, err)
+				fmt.Printf("⚠️  [WA] Error uploading file (ID %d): %v. Retrying text only...\n", t.ID, err)
 			} else {
 				fmt.Printf("✅ [WA] Archivo subido. URL: %s\n", resp.URL)
 
@@ -236,33 +236,33 @@ func (wa *WAClient) SendTransaction(recipient string, t models.Transaccion) erro
 					}
 				}
 				
-				fmt.Printf("📤 [WA] Enviando mensaje con adjunto (ID %d)...\n", t.ID)
+				fmt.Printf("📤 [WA] Sending message with attachment (ID %d)...\n", t.ID)
 				_, err = wa.Client.SendMessage(context.Background(), jid, &msg)
 				if err == nil {
-					fmt.Printf("✅ [WA] Mensaje con adjunto (ID %d) enviado con éxito.\n", t.ID)
+					fmt.Printf("✅ [WA] Message with attachment (ID %d) sent successfully.\n", t.ID)
 					return nil
 				}
-				fmt.Printf("⚠️  [WA] Error enviando adjunto (ID %d): %v. Reintentando solo texto...\n", t.ID, err)
+				fmt.Printf("⚠️  [WA] Error sending attachment (ID %d): %v. Retrying text only...\n", t.ID, err)
 			}
 		} else {
-			fmt.Printf("⚠️  [WA] No se pudo leer el archivo (ID %d): %v. Archivo: %s\n", t.ID, err, fileName)
+			fmt.Printf("⚠️  [WA] Could not read the file (ID %d): %v. File: %s\n", t.ID, err, fileName)
 		}
 	}
 
-	// Fallback: Si no hay imagen, falló el envío o falló la subida, enviar solo texto
-	fmt.Printf("📤 [WA] Enviando mensaje de texto (ID %d)...\n", t.ID)
+	// Fallback: if there is no image, or the send or upload failed, send text only
+	fmt.Printf("📤 [WA] Sending text message (ID %d)...\n", t.ID)
 	_, err = wa.Client.SendMessage(context.Background(), jid, &waE2E.Message{
 		Conversation: proto.String(messageText),
 	})
 	if err == nil {
-		fmt.Printf("✅ [WA] Mensaje de texto (ID %d) enviado con éxito.\n", t.ID)
+		fmt.Printf("✅ [WA] Text message (ID %d) sent successfully.\n", t.ID)
 	} else {
-		fmt.Printf("❌ [WA] Error final enviando ID %d: %v\n", t.ID, err)
+		fmt.Printf("❌ [WA] Final error sending ID %d: %v\n", t.ID, err)
 	}
 	return err
 }
 
-// GetGroupJIDByName busca el JID de un grupo basándose en su nombre.
+// GetGroupJIDByName looks up a group's JID by its name.
 func (wa *WAClient) GetGroupJIDByName(name string) (types.JID, error) {
 	groups, err := wa.Client.GetJoinedGroups(context.Background())
 	if err != nil {
@@ -275,10 +275,10 @@ func (wa *WAClient) GetGroupJIDByName(name string) (types.JID, error) {
 		}
 	}
 
-	return types.EmptyJID, fmt.Errorf("grupo '%s' no encontrado", name)
+	return types.EmptyJID, fmt.Errorf("group '%s' not found", name)
 }
 
-// GetJoinedGroupsNames devuelve una lista de nombres de grupos unidos.
+// GetJoinedGroupsNames returns a list of joined group names.
 func (wa *WAClient) GetJoinedGroupsNames() ([]string, error) {
 	groups, err := wa.Client.GetJoinedGroups(context.Background())
 	if err != nil {
@@ -291,8 +291,8 @@ func (wa *WAClient) GetJoinedGroupsNames() ([]string, error) {
 	return names, nil
 }
 
-// sanitizeDSN elimina el sufijo '-pooler' de los hosts de Neon para WhatsApp, 
-// ya que whatsmeow requiere Session Mode para manejar correctamente los prepared statements y llaves criptográficas.
+// sanitizeDSN removes the '-pooler' suffix from Neon hosts for WhatsApp,
+// since whatsmeow requires Session Mode to correctly handle prepared statements and cryptographic keys.
 func sanitizeDSN(dsn string) string {
 	if strings.Contains(dsn, "-pooler") {
 		return strings.Replace(dsn, "-pooler", "", 1)
@@ -300,7 +300,7 @@ func sanitizeDSN(dsn string) string {
 	return dsn
 }
 
-// getHostFromDSN extrae el hostname para fines de logging
+// getHostFromDSN extracts the hostname for logging purposes
 func getHostFromDSN(dsn string) string {
 	parts := strings.Split(dsn, "@")
 	if len(parts) > 1 {

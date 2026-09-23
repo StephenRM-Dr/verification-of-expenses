@@ -6,7 +6,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// InitDB inicializa la base de datos y crea la tabla si no existe.
+// InitDB initializes the database and creates the table if it does not exist.
 func InitDB(connStr string) (*sql.DB, error) {
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
@@ -29,9 +29,9 @@ func InitDB(connStr string) (*sql.DB, error) {
 		return nil, err
 	}
 
-	// Migración rápida: intentar añadir la columna imagen_path si no existe
+	// Quick migration: try to add the imagen_path column if it does not exist
 	db.Exec("ALTER TABLE historial ADD COLUMN imagen_path TEXT")
-	// Convertir NULLs existentes a strings vacíos para evitar errores de Scan
+	// Convert existing NULLs to empty strings to avoid Scan errors
 	db.Exec("UPDATE historial SET imagen_path = '' WHERE imagen_path IS NULL")
 
 	if err := migrateMontoToNumeric(db); err != nil {
@@ -41,41 +41,41 @@ func InitDB(connStr string) (*sql.DB, error) {
 	return db, nil
 }
 
-// migrateMontoToNumeric convierte monto de REAL a NUMERIC(15,2).
+// migrateMontoToNumeric converts monto from REAL to NUMERIC(15,2).
 //
-// REAL es float de simple precisión (~7 dígitos significativos): con montos de
-// ocho o nueve cifras el valor guardado ya no es exacto, y las sumas dependen
-// del orden de las filas. Para dinero hace falta decimal exacto.
+// REAL is a single-precision float (~7 significant digits): with amounts of
+// eight or nine digits the stored value is no longer exact, and sums depend
+// on row order. Money needs an exact decimal.
 //
-// Es idempotente: si la columna ya es numeric no hace nada, así que puede correr
-// en cada arranque sin coste.
+// It is idempotent: if the column is already numeric it does nothing, so it can run
+// on every startup at no cost.
 func migrateMontoToNumeric(db *sql.DB) error {
 	var dataType string
 	err := db.QueryRow(`SELECT data_type FROM information_schema.columns
 		WHERE table_name = 'historial' AND column_name = 'monto'`).Scan(&dataType)
 	if err != nil {
-		// Si no se puede determinar el tipo, no bloqueamos el arranque.
+		// If the type cannot be determined, do not block startup.
 		return nil
 	}
 	if dataType == "numeric" {
 		return nil
 	}
 
-	// El cast pasa por text para respetar la representación decimal que el
-	// usuario vio al cargar el monto, en vez del binario real del float.
+	// The cast goes through text to preserve the decimal representation the
+	// user saw when entering the amount, instead of the float's real binary value.
 	_, err = db.Exec(`ALTER TABLE historial
 		ALTER COLUMN monto TYPE NUMERIC(15,2) USING monto::text::numeric(15,2)`)
 	return err
 }
 
-// CreateTransaction inserta una nueva transacción en la base de datos.
+// CreateTransaction inserts a new transaction into the database.
 func CreateTransaction(db *sql.DB, t models.Transaccion) error {
 	_, err := db.Exec(`INSERT INTO historial (fecha_pago, descripcion, monto, ciudad, banco_usado, referencia, imagen_path) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7)`, t.FechaPago, t.Descripcion, t.Monto, t.Ciudad, t.Banco, t.Referencia, t.ImagenPath)
 	return err
 }
 
-// ListTransactions recupera todas las transacciones ordenadas por ID descendente.
+// ListTransactions retrieves all transactions ordered by ID descending.
 func ListTransactions(db *sql.DB) ([]models.Transaccion, error) {
 	rows, err := db.Query("SELECT id, fecha_pago, descripcion, monto, ciudad, banco_usado, referencia, COALESCE(imagen_path, '') FROM historial ORDER BY id DESC")
 	if err != nil {
@@ -95,7 +95,7 @@ func ListTransactions(db *sql.DB) ([]models.Transaccion, error) {
 	return transacciones, nil
 }
 
-// SearchTransactions busca transacciones por descripción o referencia (Case Insensitive).
+// SearchTransactions searches transactions by description or reference (case insensitive).
 func SearchTransactions(db *sql.DB, query string) ([]models.Transaccion, error) {
 	searchQuery := "%" + query + "%"
 	rows, err := db.Query(`SELECT id, fecha_pago, descripcion, monto, ciudad, banco_usado, referencia, COALESCE(imagen_path, '') 
@@ -119,7 +119,7 @@ func SearchTransactions(db *sql.DB, query string) ([]models.Transaccion, error) 
 	return transacciones, nil
 }
 
-// GetTransactionByID recupera una única transacción por su ID.
+// GetTransactionByID retrieves a single transaction by its ID.
 func GetTransactionByID(db *sql.DB, id int) (models.Transaccion, error) {
 	var t models.Transaccion
 	err := db.QueryRow("SELECT id, fecha_pago, descripcion, monto, ciudad, banco_usado, referencia, COALESCE(imagen_path, '') FROM historial WHERE id = $1", id).
@@ -127,14 +127,14 @@ func GetTransactionByID(db *sql.DB, id int) (models.Transaccion, error) {
 	return t, err
 }
 
-// UpdateTransaction actualiza una transacción existente.
+// UpdateTransaction updates an existing transaction.
 func UpdateTransaction(db *sql.DB, t models.Transaccion) error {
 	_, err := db.Exec(`UPDATE historial SET fecha_pago = $1, descripcion = $2, monto = $3, ciudad = $4, banco_usado = $5, referencia = $6, imagen_path = $7 
 		WHERE id = $8`, t.FechaPago, t.Descripcion, t.Monto, t.Ciudad, t.Banco, t.Referencia, t.ImagenPath, t.ID)
 	return err
 }
 
-// DeleteTransaction elimina una transacción por su ID.
+// DeleteTransaction deletes a transaction by its ID.
 func DeleteTransaction(db *sql.DB, id int) error {
 	_, err := db.Exec("DELETE FROM historial WHERE id = $1", id)
 	return err
