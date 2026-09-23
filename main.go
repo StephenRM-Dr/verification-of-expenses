@@ -19,9 +19,9 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// @title       Braille Web - API de Transacciones y Reportes
+// @title       Verification of Expenses - Transactions & Reports API
 // @version     1.0
-// @description Backend escalable en Go para control financiero y automatización de reportes a WhatsApp.
+// @description Go backend for expense tracking, receipt storage, Excel reporting and WhatsApp notifications.
 // @host        api.example.com
 // @BasePath    /
 

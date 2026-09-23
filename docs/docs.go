@@ -17,23 +17,23 @@ const docTemplate = `{
     "paths": {
         "/api/export": {
             "get": {
-                "description": "Sincroniza y descarga una sábana de datos procesada en formato binario legible por Microsoft Excel o plataformas externas de contabilidad.",
+                "description": "Downloads the full transaction history as an Excel workbook.",
                 "produces": [
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 ],
                 "tags": [
                     "export"
                 ],
-                "summary": "Exportar historial de transacciones a Excel (.xlsx)",
+                "summary": "Export transactions to Excel (.xlsx)",
                 "responses": {
                     "200": {
-                        "description": "Descarga de archivo reporte_brailer.xlsx",
+                        "description": "Excel file download",
                         "schema": {
                             "type": "file"
                         }
                     },
                     "500": {
-                        "description": "Error al construir dinámicamente la estructura Excel",
+                        "description": "Error while building the Excel workbook",
                         "schema": {
                             "type": "string"
                         }
@@ -43,24 +43,24 @@ const docTemplate = `{
         },
         "/api/summary": {
             "get": {
-                "description": "Calcula el balance acumulado general, los gastos del mes corriente en base a la fecha actual y la cantidad de transacciones registradas.",
+                "description": "Returns the overall total, the current month's total and the number of recorded transactions.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "metrics"
                 ],
-                "summary": "Obtener resumen analítico",
+                "summary": "Get summary metrics",
                 "responses": {
                     "200": {
-                        "description": "Ejemplo: {'total_general': 5000.5, 'total_mes': 1200.0, 'conteo': 14}",
+                        "description": "Example: {'total_general': 5000.5, 'total_mes': 1200.0, 'conteo': 14}",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
                         }
                     },
                     "500": {
-                        "description": "Error de servidor al calcular la lista",
+                        "description": "Server error while computing the summary",
                         "schema": {
                             "type": "string"
                         }
@@ -70,7 +70,7 @@ const docTemplate = `{
         },
         "/api/transactions": {
             "get": {
-                "description": "Permite Listar (GET), Crear (POST), Editar (PUT) usando multipart/form-data o JSON, y Eliminar (DELETE) transacciones financieras.",
+                "description": "List (GET), create (POST), update (PUT) and delete (DELETE) financial transactions, using multipart/form-data or JSON.",
                 "consumes": [
                     "application/json",
                     "multipart/form-data"
@@ -81,72 +81,72 @@ const docTemplate = `{
                 "tags": [
                     "transactions"
                 ],
-                "summary": "Manejar Transacciones (CRUD)",
+                "summary": "Manage transactions (CRUD)",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID de la transacción (Requerido solo para DELETE)",
+                        "description": "Transaction ID (required only for DELETE)",
                         "name": "id",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "ID de la transacción (Requerido solo para PUT con FormData)",
+                        "description": "Transaction ID (required only for PUT with form data)",
                         "name": "id",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Fecha de pago (DD/MM/YYYY)",
+                        "description": "Payment date (DD/MM/YYYY)",
                         "name": "fecha_pago",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Descripción o concepto del gasto",
+                        "description": "Description of the expense",
                         "name": "descripcion",
                         "in": "formData"
                     },
                     {
                         "type": "number",
-                        "description": "Monto financiero de la operación",
+                        "description": "Transaction amount",
                         "name": "monto",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Ciudad de la transacción",
+                        "description": "City of the transaction",
                         "name": "ciudad",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Banco utilizado",
+                        "description": "Bank used",
                         "name": "banco_usado",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Número de referencia bancaria",
+                        "description": "Bank reference number",
                         "name": "referencia",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Ruta de imagen existente si no se reemplaza",
+                        "description": "Existing image path, kept if no new file is uploaded",
                         "name": "imagen_path",
                         "in": "formData"
                     },
                     {
                         "type": "file",
-                        "description": "Archivo comprobante / soporte físico",
+                        "description": "Receipt image file",
                         "name": "image",
                         "in": "formData"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Operación exitosa (GET devuelve lista, PUT confirma estado)",
+                        "description": "Success (GET returns the list, PUT confirms the update)",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -155,7 +155,7 @@ const docTemplate = `{
                         }
                     },
                     "201": {
-                        "description": "Transacción creada exitosamente (POST)",
+                        "description": "Transaction created (POST)",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -164,13 +164,13 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Datos de entrada inválidos",
+                        "description": "Invalid input",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Error interno del servidor de base de datos",
+                        "description": "Internal database error",
                         "schema": {
                             "type": "string"
                         }
@@ -178,7 +178,7 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Permite Listar (GET), Crear (POST), Editar (PUT) usando multipart/form-data o JSON, y Eliminar (DELETE) transacciones financieras.",
+                "description": "List (GET), create (POST), update (PUT) and delete (DELETE) financial transactions, using multipart/form-data or JSON.",
                 "consumes": [
                     "application/json",
                     "multipart/form-data"
@@ -189,72 +189,72 @@ const docTemplate = `{
                 "tags": [
                     "transactions"
                 ],
-                "summary": "Manejar Transacciones (CRUD)",
+                "summary": "Manage transactions (CRUD)",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID de la transacción (Requerido solo para DELETE)",
+                        "description": "Transaction ID (required only for DELETE)",
                         "name": "id",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "ID de la transacción (Requerido solo para PUT con FormData)",
+                        "description": "Transaction ID (required only for PUT with form data)",
                         "name": "id",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Fecha de pago (DD/MM/YYYY)",
+                        "description": "Payment date (DD/MM/YYYY)",
                         "name": "fecha_pago",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Descripción o concepto del gasto",
+                        "description": "Description of the expense",
                         "name": "descripcion",
                         "in": "formData"
                     },
                     {
                         "type": "number",
-                        "description": "Monto financiero de la operación",
+                        "description": "Transaction amount",
                         "name": "monto",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Ciudad de la transacción",
+                        "description": "City of the transaction",
                         "name": "ciudad",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Banco utilizado",
+                        "description": "Bank used",
                         "name": "banco_usado",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Número de referencia bancaria",
+                        "description": "Bank reference number",
                         "name": "referencia",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Ruta de imagen existente si no se reemplaza",
+                        "description": "Existing image path, kept if no new file is uploaded",
                         "name": "imagen_path",
                         "in": "formData"
                     },
                     {
                         "type": "file",
-                        "description": "Archivo comprobante / soporte físico",
+                        "description": "Receipt image file",
                         "name": "image",
                         "in": "formData"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Operación exitosa (GET devuelve lista, PUT confirma estado)",
+                        "description": "Success (GET returns the list, PUT confirms the update)",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -263,7 +263,7 @@ const docTemplate = `{
                         }
                     },
                     "201": {
-                        "description": "Transacción creada exitosamente (POST)",
+                        "description": "Transaction created (POST)",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -272,13 +272,13 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Datos de entrada inválidos",
+                        "description": "Invalid input",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Error interno del servidor de base de datos",
+                        "description": "Internal database error",
                         "schema": {
                             "type": "string"
                         }
@@ -286,7 +286,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Permite Listar (GET), Crear (POST), Editar (PUT) usando multipart/form-data o JSON, y Eliminar (DELETE) transacciones financieras.",
+                "description": "List (GET), create (POST), update (PUT) and delete (DELETE) financial transactions, using multipart/form-data or JSON.",
                 "consumes": [
                     "application/json",
                     "multipart/form-data"
@@ -297,72 +297,72 @@ const docTemplate = `{
                 "tags": [
                     "transactions"
                 ],
-                "summary": "Manejar Transacciones (CRUD)",
+                "summary": "Manage transactions (CRUD)",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID de la transacción (Requerido solo para DELETE)",
+                        "description": "Transaction ID (required only for DELETE)",
                         "name": "id",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "ID de la transacción (Requerido solo para PUT con FormData)",
+                        "description": "Transaction ID (required only for PUT with form data)",
                         "name": "id",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Fecha de pago (DD/MM/YYYY)",
+                        "description": "Payment date (DD/MM/YYYY)",
                         "name": "fecha_pago",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Descripción o concepto del gasto",
+                        "description": "Description of the expense",
                         "name": "descripcion",
                         "in": "formData"
                     },
                     {
                         "type": "number",
-                        "description": "Monto financiero de la operación",
+                        "description": "Transaction amount",
                         "name": "monto",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Ciudad de la transacción",
+                        "description": "City of the transaction",
                         "name": "ciudad",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Banco utilizado",
+                        "description": "Bank used",
                         "name": "banco_usado",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Número de referencia bancaria",
+                        "description": "Bank reference number",
                         "name": "referencia",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Ruta de imagen existente si no se reemplaza",
+                        "description": "Existing image path, kept if no new file is uploaded",
                         "name": "imagen_path",
                         "in": "formData"
                     },
                     {
                         "type": "file",
-                        "description": "Archivo comprobante / soporte físico",
+                        "description": "Receipt image file",
                         "name": "image",
                         "in": "formData"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Operación exitosa (GET devuelve lista, PUT confirma estado)",
+                        "description": "Success (GET returns the list, PUT confirms the update)",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -371,7 +371,7 @@ const docTemplate = `{
                         }
                     },
                     "201": {
-                        "description": "Transacción creada exitosamente (POST)",
+                        "description": "Transaction created (POST)",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -380,13 +380,13 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Datos de entrada inválidos",
+                        "description": "Invalid input",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Error interno del servidor de base de datos",
+                        "description": "Internal database error",
                         "schema": {
                             "type": "string"
                         }
@@ -394,7 +394,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Permite Listar (GET), Crear (POST), Editar (PUT) usando multipart/form-data o JSON, y Eliminar (DELETE) transacciones financieras.",
+                "description": "List (GET), create (POST), update (PUT) and delete (DELETE) financial transactions, using multipart/form-data or JSON.",
                 "consumes": [
                     "application/json",
                     "multipart/form-data"
@@ -405,72 +405,72 @@ const docTemplate = `{
                 "tags": [
                     "transactions"
                 ],
-                "summary": "Manejar Transacciones (CRUD)",
+                "summary": "Manage transactions (CRUD)",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID de la transacción (Requerido solo para DELETE)",
+                        "description": "Transaction ID (required only for DELETE)",
                         "name": "id",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "ID de la transacción (Requerido solo para PUT con FormData)",
+                        "description": "Transaction ID (required only for PUT with form data)",
                         "name": "id",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Fecha de pago (DD/MM/YYYY)",
+                        "description": "Payment date (DD/MM/YYYY)",
                         "name": "fecha_pago",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Descripción o concepto del gasto",
+                        "description": "Description of the expense",
                         "name": "descripcion",
                         "in": "formData"
                     },
                     {
                         "type": "number",
-                        "description": "Monto financiero de la operación",
+                        "description": "Transaction amount",
                         "name": "monto",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Ciudad de la transacción",
+                        "description": "City of the transaction",
                         "name": "ciudad",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Banco utilizado",
+                        "description": "Bank used",
                         "name": "banco_usado",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Número de referencia bancaria",
+                        "description": "Bank reference number",
                         "name": "referencia",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Ruta de imagen existente si no se reemplaza",
+                        "description": "Existing image path, kept if no new file is uploaded",
                         "name": "imagen_path",
                         "in": "formData"
                     },
                     {
                         "type": "file",
-                        "description": "Archivo comprobante / soporte físico",
+                        "description": "Receipt image file",
                         "name": "image",
                         "in": "formData"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Operación exitosa (GET devuelve lista, PUT confirma estado)",
+                        "description": "Success (GET returns the list, PUT confirms the update)",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -479,7 +479,7 @@ const docTemplate = `{
                         }
                     },
                     "201": {
-                        "description": "Transacción creada exitosamente (POST)",
+                        "description": "Transaction created (POST)",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -488,13 +488,13 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Datos de entrada inválidos",
+                        "description": "Invalid input",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Error interno del servidor de base de datos",
+                        "description": "Internal database error",
                         "schema": {
                             "type": "string"
                         }
@@ -504,17 +504,17 @@ const docTemplate = `{
         },
         "/api/whatsapp/logout": {
             "post": {
-                "description": "Desvincula de manera remota el dispositivo y levanta de forma asíncrona una nueva rutina para refrescar las llaves criptográficas y servir un QR limpio.",
+                "description": "Unlinks the device and asynchronously starts a fresh pairing flow that serves a new QR code.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "whatsapp"
                 ],
-                "summary": "Cerrar sesión de WhatsApp y regenerar QR",
+                "summary": "Log out of WhatsApp and regenerate the QR code",
                 "responses": {
                     "200": {
-                        "description": "Confirmación de reinicio de credenciales: {'status': 'resetting'}",
+                        "description": "Credentials reset confirmation: {'status': 'resetting'}",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -527,32 +527,32 @@ const docTemplate = `{
         },
         "/api/whatsapp/send": {
             "post": {
-                "description": "Encola de forma asíncrona y segura el envío estructurado de un reporte hacia un canal o grupo de WhatsApp parametrizado. Evita duplicados simultáneos.",
+                "description": "Asynchronously queues a structured report to a WhatsApp group or contact, preventing concurrent duplicate sends.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "whatsapp"
                 ],
-                "summary": "Reportar transacción a WhatsApp",
+                "summary": "Send a transaction to WhatsApp",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID único de la transacción a reportar",
+                        "description": "ID of the transaction to send",
                         "name": "id",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Nombre o JID del destinatario (Por defecto: 'Prueba')",
+                        "description": "Recipient group name or JID (default: 'Prueba')",
                         "name": "to",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Estado de la transacción en cola: 'queued' o 'processing'",
+                        "description": "Queue state of the send: 'queued' or 'processing'",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -561,13 +561,13 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Transacción o Grupo objetivo no encontrado",
+                        "description": "Transaction or target group not found",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "503": {
-                        "description": "El cliente de WhatsApp no se encuentra inicializado o conectado",
+                        "description": "WhatsApp client is not initialized or connected",
                         "schema": {
                             "type": "string"
                         }
@@ -577,17 +577,17 @@ const docTemplate = `{
         },
         "/api/whatsapp/status": {
             "get": {
-                "description": "Devuelve el estado actual del puente de comunicación, errores persistentes, cadenas QR activas para emparejamiento o el listado de grupos vinculados.",
+                "description": "Returns the current connection state, any persistent error, the active pairing QR code, or the list of joined groups.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "whatsapp"
                 ],
-                "summary": "Estado de WhatsApp Multi-Device",
+                "summary": "WhatsApp connection status",
                 "responses": {
                     "200": {
-                        "description": "Estructura del estado del cliente y grupos vinculados",
+                        "description": "Client state and joined groups",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -636,8 +636,8 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "api.example.com",
 	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "Braille Web - API de Transacciones y Reportes",
-	Description:      "Backend escalable en Go para control financiero y automatización de reportes a WhatsApp.",
+	Title:            "Verification of Expenses - Transactions & Reports API",
+	Description:      "Go backend for expense tracking, receipt storage, Excel reporting and WhatsApp notifications.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

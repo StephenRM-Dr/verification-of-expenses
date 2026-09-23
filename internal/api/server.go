@@ -88,7 +88,7 @@ func (s *Server) Start(port string) error {
 	// Servir comprobantes desde el backend de almacenamiento activo (bucket o disco)
 	mux.HandleFunc("/uploads/", s.handleUploads)
 
-	fmt.Printf("🚀 API Server running on http://192.168.1.5:%s\n", port)
+	fmt.Printf("🚀 API Server running on http://localhost:%s\n", port)
 	return http.ListenAndServe(":"+port, corsMiddleware(mux))
 }
 
@@ -143,25 +143,25 @@ func (s *Server) handleUploads(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleTransactions nuclea el CRUD de transacciones.
-// @Summary      Manejar Transacciones (CRUD)
-// @Description  Permite Listar (GET), Crear (POST), Editar (PUT) usando multipart/form-data o JSON, y Eliminar (DELETE) transacciones financieras.
+// @Summary      Manage transactions (CRUD)
+// @Description  List (GET), create (POST), update (PUT) and delete (DELETE) financial transactions, using multipart/form-data or JSON.
 // @Tags         transactions
 // @Accept       json,mpfd
 // @Produce      json
-// @Param        id            query     int     false  "ID de la transacción (Requerido solo para DELETE)"
-// @Param        id            formData  int     false  "ID de la transacción (Requerido solo para PUT con FormData)"
-// @Param        fecha_pago    formData  string  false  "Fecha de pago (DD/MM/YYYY)"
-// @Param        descripcion   formData  string  false  "Descripción o concepto del gasto"
-// @Param        monto         formData  number  false  "Monto financiero de la operación"
-// @Param        ciudad        formData  string  false  "Ciudad de la transacción"
-// @Param        banco_usado   formData  string  false  "Banco utilizado"
-// @Param        referencia    formData  string  false  "Número de referencia bancaria"
-// @Param        imagen_path   formData  string  false  "Ruta de imagen existente si no se reemplaza"
-// @Param        image         formData  file    false  "Archivo comprobante / soporte físico"
-// @Success      200           {array}   models.Transaccion "Operación exitosa (GET devuelve lista, PUT confirma estado)"
-// @Success      201           {object}  map[string]string  "Transacción creada exitosamente (POST)"
-// @Failure      400           {string}  string "Datos de entrada inválidos"
-// @Failure      500           {string}  string "Error interno del servidor de base de datos"
+// @Param        id            query     int     false  "Transaction ID (required only for DELETE)"
+// @Param        id            formData  int     false  "Transaction ID (required only for PUT with form data)"
+// @Param        fecha_pago    formData  string  false  "Payment date (DD/MM/YYYY)"
+// @Param        descripcion   formData  string  false  "Description of the expense"
+// @Param        monto         formData  number  false  "Transaction amount"
+// @Param        ciudad        formData  string  false  "City of the transaction"
+// @Param        banco_usado   formData  string  false  "Bank used"
+// @Param        referencia    formData  string  false  "Bank reference number"
+// @Param        imagen_path   formData  string  false  "Existing image path, kept if no new file is uploaded"
+// @Param        image         formData  file    false  "Receipt image file"
+// @Success      200           {array}   models.Transaccion "Success (GET returns the list, PUT confirms the update)"
+// @Success      201           {object}  map[string]string  "Transaction created (POST)"
+// @Failure      400           {string}  string "Invalid input"
+// @Failure      500           {string}  string "Internal database error"
 // @Router       /api/transactions [get]
 // @Router       /api/transactions [post]
 // @Router       /api/transactions [put]
@@ -297,12 +297,12 @@ func (s *Server) handleTransactions(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleSummary procesa métricas globales y mensuales.
-// @Summary      Obtener resumen analítico
-// @Description  Calcula el balance acumulado general, los gastos del mes corriente en base a la fecha actual y la cantidad de transacciones registradas.
+// @Summary      Get summary metrics
+// @Description  Returns the overall total, the current month's total and the number of recorded transactions.
 // @Tags         metrics
 // @Produce      json
-// @Success      200  {object}  map[string]interface{} "Ejemplo: {'total_general': 5000.5, 'total_mes': 1200.0, 'conteo': 14}"
-// @Failure      500  {string}  string "Error de servidor al calcular la lista"
+// @Success      200  {object}  map[string]interface{} "Example: {'total_general': 5000.5, 'total_mes': 1200.0, 'conteo': 14}"
+// @Failure      500  {string}  string "Server error while computing the summary"
 // @Router       /api/summary [get]
 func (s *Server) handleSummary(w http.ResponseWriter, r *http.Request) {
 	transacciones, err := db.ListTransactions(s.db)
@@ -334,15 +334,15 @@ func (s *Server) handleSummary(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleSendWhatsApp despacha mensajes concurrentes asíncronos.
-// @Summary      Reportar transacción a WhatsApp
-// @Description  Encola de forma asíncrona y segura el envío estructurado de un reporte hacia un canal o grupo de WhatsApp parametrizado. Evita duplicados simultáneos.
+// @Summary      Send a transaction to WhatsApp
+// @Description  Asynchronously queues a structured report to a WhatsApp group or contact, preventing concurrent duplicate sends.
 // @Tags         whatsapp
 // @Produce      json
-// @Param        id    query     int     true   "ID único de la transacción a reportar"
-// @Param        to    query     string  false  "Nombre o JID del destinatario (Por defecto: 'Prueba')"
-// @Success      200   {object}  map[string]string "Estado de la transacción en cola: 'queued' o 'processing'"
-// @Failure      404   {string}  string "Transacción o Grupo objetivo no encontrado"
-// @Failure      503   {string}  string "El cliente de WhatsApp no se encuentra inicializado o conectado"
+// @Param        id    query     int     true   "ID of the transaction to send"
+// @Param        to    query     string  false  "Recipient group name or JID (default: 'Prueba')"
+// @Success      200   {object}  map[string]string "Queue state of the send: 'queued' or 'processing'"
+// @Failure      404   {string}  string "Transaction or target group not found"
+// @Failure      503   {string}  string "WhatsApp client is not initialized or connected"
 // @Router       /api/whatsapp/send [post]
 func (s *Server) handleSendWhatsApp(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
@@ -422,11 +422,11 @@ func (s *Server) handleSendWhatsApp(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleWhatsAppStatus audita el estado del cliente de WhatsApp y sus canales vinculados.
-// @Summary      Estado de WhatsApp Multi-Device
-// @Description  Devuelve el estado actual del puente de comunicación, errores persistentes, cadenas QR activas para emparejamiento o el listado de grupos vinculados.
+// @Summary      WhatsApp connection status
+// @Description  Returns the current connection state, any persistent error, the active pairing QR code, or the list of joined groups.
 // @Tags         whatsapp
 // @Produce      json
-// @Success      200  {object}  map[string]interface{} "Estructura del estado del cliente y grupos vinculados"
+// @Success      200  {object}  map[string]interface{} "Client state and joined groups"
 // @Router       /api/whatsapp/status [get]
 func (s *Server) handleWhatsAppStatus(w http.ResponseWriter, r *http.Request) {
 	s.mu.RLock()
@@ -457,11 +457,11 @@ func (s *Server) handleWhatsAppStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleWhatsAppLogout revoca credenciales de sesión activa.
-// @Summary      Cerrar sesión de WhatsApp y regenerar QR
-// @Description  Desvincula de manera remota el dispositivo y levanta de forma asíncrona una nueva rutina para refrescar las llaves criptográficas y servir un QR limpio.
+// @Summary      Log out of WhatsApp and regenerate the QR code
+// @Description  Unlinks the device and asynchronously starts a fresh pairing flow that serves a new QR code.
 // @Tags         whatsapp
 // @Produce      json
-// @Success      200  {object}  map[string]string "Confirmación de reinicio de credenciales: {'status': 'resetting'}"
+// @Success      200  {object}  map[string]string "Credentials reset confirmation: {'status': 'resetting'}"
 // @Router       /api/whatsapp/logout [post]
 func (s *Server) handleWhatsAppLogout(w http.ResponseWriter, r *http.Request) {
 	s.mu.RLock()
@@ -494,12 +494,12 @@ func (s *Server) handleWhatsAppLogout(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleExport empaqueta la base de datos completa a Excel format estructurado.
-// @Summary      Exportar historial de transacciones a Excel (.xlsx)
-// @Description  Sincroniza y descarga una sábana de datos procesada en formato binario legible por Microsoft Excel o plataformas externas de contabilidad.
+// @Summary      Export transactions to Excel (.xlsx)
+// @Description  Downloads the full transaction history as an Excel workbook.
 // @Tags         export
 // @Produce      application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
-// @Success      200  {file}    binary "Descarga de archivo reporte_brailer.xlsx"
-// @Failure      500  {string}  string "Error al construir dinámicamente la estructura Excel"
+// @Success      200  {file}    binary "Excel file download"
+// @Failure      500  {string}  string "Error while building the Excel workbook"
 // @Router       /api/export [get]
 func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	transacciones, err := db.ListTransactions(s.db)
